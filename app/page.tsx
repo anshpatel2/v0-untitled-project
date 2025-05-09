@@ -105,7 +105,12 @@ export default function Home() {
                 </Link>
               </Button>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button size="sm">Get Started</Button>
+                <Link
+                  href="https://billing.solenodes.cloud/"
+                  className="w-full h-full flex items-center justify-center"
+                >
+                  Get Started
+                </Link>
               </motion.div>
             </nav>
           </div>
