@@ -3,7 +3,7 @@ import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata = {
-  title: "ServerPro Hosting - Reliable Server Solutions",
+  title: "SoleNodes - Reliable Server Solutions",
   description:
     "Professional server hosting with 99.9% uptime guarantee. VPS, dedicated servers, and cloud hosting solutions for businesses of all sizes.",
     generator: 'v0.dev'
