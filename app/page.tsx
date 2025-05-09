@@ -77,7 +77,7 @@ export default function Home() {
               <motion.div whileHover={{ rotate: 10 }} transition={{ type: "spring", stiffness: 400 }}>
                 <Server className="h-6 w-6 text-primary" />
               </motion.div>
-              <span className="inline-block font-bold">ServerPro Hosting</span>
+              <span className="inline-block font-bold">SoleNodes</span>
             </Link>
             <nav className="hidden md:flex gap-6">
               <Link href="#features" className="text-sm font-medium transition-colors hover:text-primary">
@@ -226,7 +226,7 @@ export default function Home() {
                 <Badge variant="outline" className="w-fit mx-auto">
                   Features
                 </Badge>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Why Choose ServerPro Hosting</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Why Choose SoleNodes</h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mx-auto">
                   We provide enterprise-grade infrastructure with features designed to keep your applications running
                   smoothly.
@@ -426,7 +426,7 @@ export default function Home() {
                   name: "Sarah Johnson",
                   role: "Tech Startup CEO",
                   testimonial:
-                    "ServerPro Hosting has been a game-changer for our startup. The performance is outstanding, and their support team is always there when we need them.",
+                    "SoleNodes has been a game-changer for our startup. The performance is outstanding, and their support team is always there when we need them.",
                 },
                 {
                   name: "Michael Chen",
@@ -616,7 +616,7 @@ export default function Home() {
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Ready to Get Started?</h2>
                 <p className="mx-auto max-w-[700px] md:text-xl">
-                  Join thousands of satisfied customers who trust ServerPro Hosting for their server needs.
+                  Join thousands of satisfied customers who trust SoleNodes for their server needs.
                 </p>
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -654,7 +654,7 @@ export default function Home() {
                 <motion.div whileHover={{ rotate: 10 }} transition={{ type: "spring", stiffness: 400 }}>
                   <Server className="h-6 w-6 text-primary" />
                 </motion.div>
-                <span className="font-bold">ServerPro Hosting</span>
+                <span className="font-bold">SoleNodes</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 Reliable server hosting solutions for businesses of all sizes.
@@ -799,7 +799,7 @@ export default function Home() {
           </div>
           <div className="mt-8 border-t pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-xs text-muted-foreground mb-4 md:mb-0">
-              © {new Date().getFullYear()} ServerPro Hosting. All rights reserved.
+              © {new Date().getFullYear()} SoleNodes. All rights reserved.
             </p>
             <div className="flex space-x-4 text-xs text-muted-foreground">
               <Link href="#" className="hover:text-foreground">
