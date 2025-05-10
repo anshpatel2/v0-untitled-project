@@ -1,11 +1,12 @@
 import type React from "react"
 import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 
 export const metadata = {
-  title: "SoleNodes - Reliable Server Solutions",
+  title: "SoleNodes - Premium Game Server Hosting",
   description:
-    "Professional server hosting with 99.9% uptime guarantee. VPS, dedicated servers, and cloud hosting solutions for businesses of all sizes.",
+    "Professional game server hosting with 99.9% uptime guarantee. Minecraft, VPS, and web hosting solutions for gamers and communities.",
     generator: 'v0.dev'
 }
 
@@ -16,9 +17,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

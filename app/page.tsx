@@ -5,10 +5,26 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Server, Shield, Zap, Clock, HeartPulse, ChevronRight, Globe, Users } from "lucide-react"
-import { motion } from "framer-motion"
-import { useInView } from "framer-motion"
-import { useRef } from "react"
+import {
+  CheckCircle,
+  Server,
+  Shield,
+  Zap,
+  Clock,
+  HeartPulse,
+  ChevronRight,
+  Globe,
+  Users,
+  DiscIcon as DiscordIcon,
+  Gamepad2,
+  Cpu,
+  Wifi,
+} from "lucide-react"
+import { motion, useScroll, useTransform, useInView } from "framer-motion"
+import { useRef, useState, useEffect } from "react"
+import { submitContactForm } from "./actions/contact-form"
+import { useToast } from "@/components/ui/use-toast"
+import { useActionState } from "react"
 
 // Animation variants
 const fadeIn = {
@@ -44,6 +60,18 @@ const cardVariant = {
   },
 }
 
+const glowVariant = {
+  initial: { boxShadow: "0 0 0px rgba(80, 230, 255, 0)" },
+  animate: {
+    boxShadow: "0 0 20px rgba(80, 230, 255, 0.7)",
+    transition: {
+      duration: 2,
+      repeat: Number.POSITIVE_INFINITY,
+      repeatType: "reverse",
+    },
+  },
+}
+
 // Custom hook for animations when element is in view
 function AnimateWhenVisible({ children, variants, className }) {
   const ref = useRef(null)
@@ -63,54 +91,207 @@ function AnimateWhenVisible({ children, variants, className }) {
 }
 
 export default function Home() {
+  const { toast } = useToast()
+  const [formState, formAction] = useActionState(submitContactForm, {
+    message: "",
+    success: false,
+  })
+
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
+    }
+
+    window.addEventListener("mousemove", handleMouseMove)
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+    }
+  }, [])
+
+  const { scrollYProgress } = useScroll()
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.2])
+  const opacity = useTransform(scrollYProgress, [0, 0.3, 1], [1, 0.3, 0])
+  const y = useTransform(scrollYProgress, [0, 1], [0, -100])
+
+  // Particle effect for background
+  const [particles, setParticles] = useState([])
+
+  useEffect(() => {
+    const generateParticles = () => {
+      const newParticles = []
+      for (let i = 0; i < 50; i++) {
+        newParticles.push({
+          id: i,
+          x: Math.random() * 100,
+          y: Math.random() * 100,
+          size: Math.random() * 3 + 1,
+          speed: Math.random() * 0.3 + 0.1,
+        })
+      }
+      setParticles(newParticles)
+    }
+
+    generateParticles()
+  }, [])
+
+  // 1. First, let's add a smooth scroll function for the navbar links
+  // Add this function inside the Home component, before the return statement
+
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id)
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-[#030315] text-white overflow-hidden">
+      {/* Animated background gradient */}
+      <div className="fixed inset-0 -z-10">
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-[#030315] via-[#0c0c2d] to-[#030315]"
+          style={{
+            backgroundSize: "400% 400%",
+            animation: "gradient 15s ease infinite",
+          }}
+        />
+
+        {/* Particles */}
+        {particles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            className="absolute rounded-full bg-[#50e6ff] opacity-30"
+            style={{
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+              left: `${particle.x}%`,
+              top: `${particle.y}%`,
+            }}
+            animate={{
+              y: ["0%", "100%"],
+              opacity: [0.1, 0.5, 0.1],
+            }}
+            transition={{
+              duration: 10 / particle.speed,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "linear",
+              delay: Math.random() * 10,
+            }}
+          />
+        ))}
+
+        {/* Mouse follower glow */}
+        <motion.div
+          className="absolute rounded-full blur-[100px] opacity-20 bg-[#50e6ff]"
+          style={{
+            width: "40vw",
+            height: "40vw",
+            left: mousePosition.x - 300,
+            top: mousePosition.y - 300,
+            transition: "left 0.5s ease-out, top 0.5s ease-out",
+          }}
+        />
+      </div>
+
+      {/* Grid lines */}
+      <div className="fixed inset-0 -z-5 opacity-10">
+        <div className="h-full w-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZGVmcz4KICA8cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgIDxwYXRoIGQ9Ik0gNDAgMCBMIDAgMCAwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9IiM1MGU2ZmYiIHN0cm9rZS13aWR0aD0iMSIvPgogIDwvcGF0dGVybj4KPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiIC8+Cjwvc3ZnPg==')]"></div>
+      </div>
+
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        className="sticky top-0 z-40 w-full border-b border-[#1a1a3a] bg-[#030315]/80 backdrop-blur-lg"
       >
         <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
           <div className="flex gap-6 md:gap-10">
             <Link href="/" className="flex items-center space-x-2">
-              <motion.div whileHover={{ rotate: 10 }} transition={{ type: "spring", stiffness: 400 }}>
-                <Server className="h-6 w-6 text-primary" />
+              <motion.div whileHover={{ rotate: 10, scale: 1.1 }} transition={{ type: "spring", stiffness: 400 }}>
+                <Server className="h-6 w-6 text-[#50e6ff]" />
               </motion.div>
-              <span className="inline-block font-bold">SoleNodes</span>
+              <span className="inline-block font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-[#50e6ff] to-[#b066ff]">
+                SoleNodes
+              </span>
             </Link>
             <nav className="hidden md:flex gap-6">
-              <Link href="#features" className="text-sm font-medium transition-colors hover:text-primary">
+              <a
+                onClick={(e) => {
+                  e.preventDefault()
+                  scrollToSection("features")
+                }}
+                href="#features"
+                className="text-sm font-medium transition-colors hover:text-[#50e6ff] cursor-pointer"
+              >
                 Features
-              </Link>
-              <Link href="#pricing" className="text-sm font-medium transition-colors hover:text-primary">
+              </a>
+              <a
+                onClick={(e) => {
+                  e.preventDefault()
+                  scrollToSection("pricing")
+                }}
+                href="#pricing"
+                className="text-sm font-medium transition-colors hover:text-[#50e6ff] cursor-pointer"
+              >
                 Pricing
-              </Link>
-              <Link href="#testimonials" className="text-sm font-medium transition-colors hover:text-primary">
+              </a>
+              <a
+                onClick={(e) => {
+                  e.preventDefault()
+                  scrollToSection("testimonials")
+                }}
+                href="#testimonials"
+                className="text-sm font-medium transition-colors hover:text-[#50e6ff] cursor-pointer"
+              >
                 Testimonials
-              </Link>
-              <Link href="#contact" className="text-sm font-medium transition-colors hover:text-primary">
+              </a>
+              <a
+                onClick={(e) => {
+                  e.preventDefault()
+                  scrollToSection("contact")
+                }}
+                href="#contact"
+                className="text-sm font-medium transition-colors hover:text-[#50e6ff] cursor-pointer"
+              >
                 Contact
+              </a>
+              <Link
+                href="https://discord.gg/Gd4FQyuNFC"
+                target="_blank"
+                className="text-sm font-medium transition-colors hover:text-[#50e6ff] flex items-center gap-1"
+              >
+                <DiscordIcon className="h-4 w-4" />
+                Discord
               </Link>
             </nav>
           </div>
           <div className="flex flex-1 items-center justify-end space-x-4">
             <nav className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-white hover:text-[#50e6ff] hover:bg-[#1a1a3a]">
                 <Link
                   href="https://billing.solenodes.cloud/"
                   className="w-full h-full flex items-center justify-center"
+                  target="_blank"
                 >
                   Login
                 </Link>
               </Button>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link
-                  href="https://billing.solenodes.cloud/"
-                  className="w-full h-full flex items-center justify-center"
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-r from-[#50e6ff] to-[#b066ff] hover:from-[#b066ff] hover:to-[#50e6ff] text-white border-0"
                 >
-                  Get Started
-                </Link>
+                  <Link
+                    href="https://billing.solenodes.cloud/"
+                    className="w-full h-full flex items-center justify-center"
+                    target="_blank"
+                  >
+                    Get Started
+                  </Link>
+                </Button>
               </motion.div>
             </nav>
           </div>
@@ -118,8 +299,12 @@ export default function Home() {
       </motion.header>
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-background to-muted">
-          <div className="container px-4 md:px-6">
+        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 relative overflow-hidden">
+          <motion.div style={{ scale, opacity, y }} className="absolute inset-0 -z-10">
+            <div className="absolute inset-0 bg-[url('/placeholder.svg?height=1080&width=1920')] bg-cover bg-center opacity-10" />
+          </motion.div>
+
+          <div className="container px-4 md:px-6 relative z-10">
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2">
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
@@ -133,26 +318,26 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
                   >
-                    <Badge variant="outline" className="w-fit">
-                      High Performance Hosting
+                    <Badge variant="outline" className="w-fit border-[#50e6ff] text-[#50e6ff]">
+                      Next-Gen Server Hosting
                     </Badge>
                   </motion.div>
                   <motion.h1
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.7, delay: 0.4 }}
-                    className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none"
+                    className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none bg-clip-text text-transparent bg-gradient-to-r from-[#50e6ff] to-[#b066ff]"
                   >
-                    Reliable Server Hosting for Your Business
+                    Elevate Your Gaming Experience
                   </motion.h1>
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.7, delay: 0.5 }}
-                    className="max-w-[600px] text-muted-foreground md:text-xl"
+                    className="max-w-[600px] text-gray-300 md:text-xl"
                   >
-                    Powerful, secure, and scalable hosting solutions with 99.9% uptime guarantee. Deploy your
-                    applications with confidence.
+                    Powerful, secure, and scalable server hosting with 99.9% uptime guarantee. Deploy your game servers
+                    with confidence.
                   </motion.p>
                 </div>
                 <motion.div
@@ -161,16 +346,37 @@ export default function Home() {
                   transition={{ duration: 0.5, delay: 0.6 }}
                   className="flex flex-col gap-2 min-[400px]:flex-row"
                 >
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button size="lg" className="gap-1">
-                      <Link href="https://billing.solenodes.cloud/" className="flex items-center">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ boxShadow: "0 0 0px rgba(80, 230, 255, 0)" }}
+                    animate={{
+                      boxShadow: "0 0 15px rgba(80, 230, 255, 0.5)",
+                      transition: {
+                        duration: 2,
+                        repeat: Number.POSITIVE_INFINITY,
+                        repeatType: "reverse",
+                      },
+                    }}
+                  >
+                    <Button
+                      size="lg"
+                      className="gap-1 bg-gradient-to-r from-[#50e6ff] to-[#b066ff] hover:from-[#b066ff] hover:to-[#50e6ff] text-white border-0"
+                    >
+                      <Link href="https://billing.solenodes.cloud/" className="flex items-center" target="_blank">
                         Get Started <ChevronRight className="h-4 w-4" />
                       </Link>
                     </Button>
                   </motion.div>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button size="lg" variant="outline">
-                      <Link href="https://billing.solenodes.cloud/">View Plans</Link>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="border-[#50e6ff] text-[#50e6ff] hover:bg-[#50e6ff]/10"
+                    >
+                      <Link href="https://billing.solenodes.cloud/" target="_blank">
+                        View Plans
+                      </Link>
                     </Button>
                   </motion.div>
                 </motion.div>
@@ -178,18 +384,18 @@ export default function Home() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5, delay: 0.7 }}
-                  className="flex items-center space-x-4 text-sm"
+                  className="flex flex-wrap items-center gap-4 text-sm"
                 >
                   <div className="flex items-center gap-1">
-                    <CheckCircle className="h-4 w-4 text-primary" />
+                    <CheckCircle className="h-4 w-4 text-[#50e6ff]" />
                     <span>99.9% Uptime</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <CheckCircle className="h-4 w-4 text-primary" />
+                    <CheckCircle className="h-4 w-4 text-[#50e6ff]" />
                     <span>24/7 Support</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <CheckCircle className="h-4 w-4 text-primary" />
+                    <CheckCircle className="h-4 w-4 text-[#50e6ff]" />
                     <span>Free Migration</span>
                   </div>
                 </motion.div>
@@ -200,13 +406,29 @@ export default function Home() {
                 transition={{ duration: 0.7, delay: 0.4 }}
                 className="flex items-center justify-center"
               >
-                <motion.div whileHover={{ scale: 1.03 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  className="relative"
+                >
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-[#50e6ff] to-[#b066ff] rounded-lg blur-lg opacity-30"
+                    animate={{
+                      opacity: [0.3, 0.6, 0.3],
+                      scale: [1, 1.05, 1],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Number.POSITIVE_INFINITY,
+                      ease: "easeInOut",
+                    }}
+                  />
                   <Image
                     src="/placeholder.svg?height=500&width=500"
                     width={500}
                     height={500}
                     alt="Server Rack"
-                    className="rounded-lg object-cover shadow-lg"
+                    className="rounded-lg object-cover shadow-lg relative z-10 bg-[#1a1a3a]"
                     priority
                   />
                 </motion.div>
@@ -216,19 +438,21 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-background">
+        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-[#05051d]">
           <div className="container px-4 md:px-6">
             <AnimateWhenVisible
               variants={fadeInUp}
               className="flex flex-col items-center justify-center space-y-4 text-center"
             >
               <div className="space-y-2">
-                <Badge variant="outline" className="w-fit mx-auto">
+                <Badge variant="outline" className="w-fit mx-auto border-[#50e6ff] text-[#50e6ff]">
                   Features
                 </Badge>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Why Choose SoleNodes</h2>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mx-auto">
-                  We provide enterprise-grade infrastructure with features designed to keep your applications running
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-[#50e6ff] to-[#b066ff]">
+                  Why Choose SoleNodes
+                </h2>
+                <p className="max-w-[900px] text-gray-300 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mx-auto">
+                  We provide enterprise-grade infrastructure with features designed to keep your game servers running
                   smoothly.
                 </p>
               </div>
@@ -239,52 +463,64 @@ export default function Home() {
             >
               {[
                 {
-                  icon: <Zap className="h-10 w-10 text-primary mb-2" />,
+                  icon: <Zap className="h-10 w-10 text-[#50e6ff] mb-2" />,
                   title: "High Performance",
                   description:
-                    "SSD storage and optimized server configurations ensure your applications run at peak performance.",
+                    "SSD storage and optimized server configurations ensure your game servers run at peak performance.",
                 },
                 {
-                  icon: <Shield className="h-10 w-10 text-primary mb-2" />,
+                  icon: <Shield className="h-10 w-10 text-[#50e6ff] mb-2" />,
                   title: "Advanced Security",
-                  description: "DDoS protection, firewall, and regular security updates to keep your data safe.",
+                  description: "DDoS protection, firewall, and regular security updates to keep your servers safe.",
                 },
                 {
-                  icon: <HeartPulse className="h-10 w-10 text-primary mb-2" />,
+                  icon: <HeartPulse className="h-10 w-10 text-[#50e6ff] mb-2" />,
                   title: "99.9% Uptime",
                   description: "Redundant infrastructure and constant monitoring ensure your services stay online.",
                 },
                 {
-                  icon: <Clock className="h-10 w-10 text-primary mb-2" />,
+                  icon: <Clock className="h-10 w-10 text-[#50e6ff] mb-2" />,
                   title: "24/7 Support",
                   description: "Our expert team is available around the clock to assist with any issues or questions.",
                 },
                 {
-                  icon: <Globe className="h-10 w-10 text-primary mb-2" />,
+                  icon: <Globe className="h-10 w-10 text-[#50e6ff] mb-2" />,
                   title: "Global Network",
                   description: "Multiple data centers around the world for low-latency access from anywhere.",
                 },
                 {
-                  icon: <Server className="h-10 w-10 text-primary mb-2" />,
-                  title: "Scalable Resources",
-                  description: "Easily upgrade your plan as your needs grow, with no downtime during transitions.",
+                  icon: <Gamepad2 className="h-10 w-10 text-[#50e6ff] mb-2" />,
+                  title: "Game Optimized",
+                  description: "Servers specifically configured for optimal gaming performance and experience.",
                 },
               ].map((feature, index) => (
                 <motion.div key={index} variants={cardVariant}>
                   <motion.div
                     whileHover={{
                       y: -10,
-                      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                      boxShadow: "0 0 25px rgba(80, 230, 255, 0.3)",
                     }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
-                    <Card className="border-0 shadow-md h-full">
+                    <Card className="border-[#1a1a3a] bg-[#0a0a2a]/80 backdrop-blur-sm shadow-md h-full">
                       <CardHeader className="pb-2">
-                        {feature.icon}
-                        <CardTitle>{feature.title}</CardTitle>
+                        <motion.div
+                          animate={{
+                            y: [0, -5, 0],
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Number.POSITIVE_INFINITY,
+                            ease: "easeInOut",
+                            delay: index * 0.2,
+                          }}
+                        >
+                          {feature.icon}
+                        </motion.div>
+                        <CardTitle className="text-white">{feature.title}</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-muted-foreground">{feature.description}</p>
+                        <p className="text-gray-400">{feature.description}</p>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -295,19 +531,21 @@ export default function Home() {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="w-full py-12 md:py-24 lg:py-32 bg-muted">
+        <section id="pricing" className="w-full py-12 md:py-24 lg:py-32 bg-[#030315]">
           <div className="container px-4 md:px-6">
             <AnimateWhenVisible
               variants={fadeInUp}
               className="flex flex-col items-center justify-center space-y-4 text-center"
             >
               <div className="space-y-2">
-                <Badge variant="outline" className="w-fit mx-auto">
+                <Badge variant="outline" className="w-fit mx-auto border-[#50e6ff] text-[#50e6ff]">
                   Pricing
                 </Badge>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Simple, Transparent Pricing</h2>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mx-auto">
-                  Choose the perfect plan for your needs. No hidden fees or surprises.
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-[#50e6ff] to-[#b066ff]">
+                  Simple, Transparent Pricing
+                </h2>
+                <p className="max-w-[900px] text-gray-300 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mx-auto">
+                  Choose the perfect Minecraft server plan for your needs. No hidden fees or surprises.
                 </p>
               </div>
             </AnimateWhenVisible>
@@ -317,27 +555,27 @@ export default function Home() {
             >
               {[
                 {
-                  title: "Starter",
-                  description: "Perfect for small projects and websites",
-                  price: "$9.99",
-                  features: ["2 CPU Cores", "2GB RAM", "50GB SSD Storage", "1TB Bandwidth", "24/7 Support"],
+                  title: "Basic",
+                  description: "Perfect for small Minecraft servers",
+                  price: "$4.99",
+                  features: ["2GB RAM", "2 vCPU Cores", "30GB SSD Storage", "Unlimited Bandwidth", "24/7 Support"],
                   popular: false,
                 },
                 {
-                  title: "Professional",
-                  description: "Ideal for growing businesses",
-                  price: "$24.99",
-                  features: ["4 CPU Cores", "8GB RAM", "100GB SSD Storage", "3TB Bandwidth", "Priority Support"],
+                  title: "Premium",
+                  description: "Ideal for medium-sized communities",
+                  price: "$9.99",
+                  features: ["4GB RAM", "3 vCPU Cores", "50GB SSD Storage", "Unlimited Bandwidth", "Priority Support"],
                   popular: true,
                 },
                 {
-                  title: "Enterprise",
-                  description: "For large-scale applications",
-                  price: "$49.99",
+                  title: "Ultimate",
+                  description: "For large Minecraft communities",
+                  price: "$19.99",
                   features: [
-                    "8 CPU Cores",
-                    "16GB RAM",
-                    "250GB SSD Storage",
+                    "8GB RAM",
+                    "4 vCPU Cores",
+                    "100GB SSD Storage",
                     "Unlimited Bandwidth",
                     "Dedicated Support",
                   ],
@@ -348,36 +586,59 @@ export default function Home() {
                   <motion.div
                     whileHover={{
                       y: -10,
-                      boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                      boxShadow: "0 0 30px rgba(80, 230, 255, 0.3)",
                     }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
-                    <Card className={`border-0 shadow-md ${plan.popular ? "border-2 border-primary shadow-lg" : ""}`}>
+                    <Card
+                      className={`border-[#1a1a3a] bg-[#0a0a2a]/80 backdrop-blur-sm shadow-md relative overflow-hidden ${
+                        plan.popular ? "border-[#50e6ff] shadow-[#50e6ff]/20 shadow-lg" : ""
+                      }`}
+                    >
+                      {plan.popular && (
+                        <motion.div
+                          className="absolute -right-12 top-6 bg-[#50e6ff] text-[#030315] text-xs font-bold px-10 py-1 rotate-45"
+                          animate={{
+                            boxShadow: [
+                              "0 0 10px rgba(80, 230, 255, 0.3)",
+                              "0 0 20px rgba(80, 230, 255, 0.6)",
+                              "0 0 10px rgba(80, 230, 255, 0.3)",
+                            ],
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Number.POSITIVE_INFINITY,
+                            ease: "easeInOut",
+                          }}
+                        >
+                          POPULAR
+                        </motion.div>
+                      )}
                       <CardHeader>
                         <div className="flex justify-between items-center">
-                          <CardTitle>{plan.title}</CardTitle>
-                          {plan.popular && <Badge>Popular</Badge>}
+                          <CardTitle className="text-white">{plan.title}</CardTitle>
+                          {plan.popular && <Badge className="bg-[#50e6ff] text-[#030315] invisible">Popular</Badge>}
                         </div>
-                        <CardDescription>{plan.description}</CardDescription>
+                        <CardDescription className="text-gray-400">{plan.description}</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-4xl font-bold">
+                        <div className="text-4xl font-bold text-white">
                           {plan.price}
-                          <span className="text-sm font-normal text-muted-foreground">/month</span>
+                          <span className="text-sm font-normal text-gray-400">/month</span>
                         </div>
                         <ul className="mt-6 space-y-2">
                           {plan.features.map((feature, i) => (
                             <li key={i} className="flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-primary" />
-                              <span>{feature}</span>
+                              <CheckCircle className="h-4 w-4 text-[#50e6ff]" />
+                              <span className="text-gray-300">{feature}</span>
                             </li>
                           ))}
                         </ul>
                       </CardContent>
                       <CardFooter>
                         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full">
-                          <Button className="w-full">
-                            <Link href="https://billing.solenodes.cloud/" className="w-full">
+                          <Button className="w-full bg-gradient-to-r from-[#50e6ff] to-[#b066ff] hover:from-[#b066ff] hover:to-[#50e6ff] text-white border-0">
+                            <Link href="https://billing.solenodes.cloud/" className="w-full" target="_blank">
                               Get Started
                             </Link>
                           </Button>
@@ -389,9 +650,9 @@ export default function Home() {
               ))}
             </AnimateWhenVisible>
             <AnimateWhenVisible variants={fadeIn} className="text-center">
-              <p className="text-muted-foreground">
+              <p className="text-gray-400">
                 Need a custom solution?{" "}
-                <Link href="#contact" className="text-primary hover:underline">
+                <Link href="#contact" className="text-[#50e6ff] hover:underline">
                   Contact us
                 </Link>{" "}
                 for personalized pricing.
@@ -400,19 +661,117 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Server Stats Section */}
+        <section className="w-full py-12 md:py-24 bg-[#05051d] relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/placeholder.svg?height=1080&width=1920')] bg-cover bg-center opacity-5"></div>
+          <div className="container px-4 md:px-6 relative z-10">
+            <AnimateWhenVisible
+              variants={fadeInUp}
+              className="flex flex-col items-center justify-center space-y-4 text-center mb-12"
+            >
+              <div className="space-y-2">
+                <Badge variant="outline" className="w-fit mx-auto border-[#50e6ff] text-[#50e6ff]">
+                  Performance
+                </Badge>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-[#50e6ff] to-[#b066ff]">
+                  Real-Time Server Metrics
+                </h2>
+                <p className="max-w-[900px] text-gray-300 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mx-auto">
+                  Our servers are optimized for maximum performance and reliability.
+                </p>
+              </div>
+            </AnimateWhenVisible>
+
+            <div className="grid gap-8 md:grid-cols-3">
+              {[
+                {
+                  icon: <Cpu className="h-8 w-8 text-[#50e6ff]" />,
+                  title: "CPU Performance",
+                  value: "99.8%",
+                  description: "Average CPU utilization",
+                },
+                {
+                  icon: <Wifi className="h-8 w-8 text-[#50e6ff]" />,
+                  title: "Network Uptime",
+                  value: "99.99%",
+                  description: "30-day average",
+                },
+                {
+                  icon: <Zap className="h-8 w-8 text-[#50e6ff]" />,
+                  title: "Response Time",
+                  value: "< 20ms",
+                  description: "Average server response",
+                },
+              ].map((stat, index) => (
+                <AnimateWhenVisible key={index} variants={cardVariant}>
+                  <motion.div
+                    whileHover={{
+                      y: -5,
+                      boxShadow: "0 0 20px rgba(80, 230, 255, 0.3)",
+                    }}
+                    className="bg-[#0a0a2a]/80 backdrop-blur-sm border border-[#1a1a3a] rounded-lg p-6 relative overflow-hidden"
+                  >
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-[#50e6ff]/5 to-[#b066ff]/5"
+                      animate={{
+                        opacity: [0.1, 0.2, 0.1],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Number.POSITIVE_INFINITY,
+                        ease: "easeInOut",
+                        delay: index * 0.3,
+                      }}
+                    />
+                    <div className="flex flex-col items-center text-center relative z-10">
+                      <motion.div
+                        animate={{
+                          y: [0, -5, 0],
+                          scale: [1, 1.1, 1],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Number.POSITIVE_INFINITY,
+                          ease: "easeInOut",
+                          delay: index * 0.2,
+                        }}
+                        className="mb-4"
+                      >
+                        {stat.icon}
+                      </motion.div>
+                      <h3 className="text-lg font-medium text-white mb-2">{stat.title}</h3>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.3, type: "spring", stiffness: 100 }}
+                        className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#50e6ff] to-[#b066ff] mb-2"
+                      >
+                        {stat.value}
+                      </motion.div>
+                      <p className="text-gray-400 text-sm">{stat.description}</p>
+                    </div>
+                  </motion.div>
+                </AnimateWhenVisible>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Testimonials Section */}
-        <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32 bg-background">
+        <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32 bg-[#030315]">
           <div className="container px-4 md:px-6">
             <AnimateWhenVisible
               variants={fadeInUp}
               className="flex flex-col items-center justify-center space-y-4 text-center"
             >
               <div className="space-y-2">
-                <Badge variant="outline" className="w-fit mx-auto">
+                <Badge variant="outline" className="w-fit mx-auto border-[#50e6ff] text-[#50e6ff]">
                   Testimonials
                 </Badge>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">What Our Customers Say</h2>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mx-auto">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-[#50e6ff] to-[#b066ff]">
+                  What Our Customers Say
+                </h2>
+                <p className="max-w-[900px] text-gray-300 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mx-auto">
                   Don't just take our word for it. Here's what our customers have to say about our services.
                 </p>
               </div>
@@ -424,54 +783,50 @@ export default function Home() {
               {[
                 {
                   name: "Sarah Johnson",
-                  role: "Tech Startup CEO",
+                  role: "Minecraft Server Owner",
                   testimonial:
-                    "SoleNodes has been a game-changer for our startup. The performance is outstanding, and their support team is always there when we need them.",
+                    "SoleNodes has been a game-changer for our Minecraft community. The performance is outstanding, and their support team is always there when we need them.",
                 },
                 {
                   name: "Michael Chen",
-                  role: "E-commerce Developer",
+                  role: "Gaming Community Leader",
                   testimonial:
-                    "We migrated our online store to ServerPro and saw immediate improvements in load times. Our customers are happier, and sales have increased.",
+                    "We migrated our game servers to SoleNodes and saw immediate improvements in performance. Our players are happier, and our community has grown.",
                 },
                 {
                   name: "David Rodriguez",
                   role: "Game Server Admin",
                   testimonial:
-                    "The uptime and performance of our game servers have been flawless since switching to ServerPro. Our players have noticed the difference.",
+                    "The uptime and performance of our servers have been flawless since switching to SoleNodes. Our players have noticed the difference.",
                 },
               ].map((testimonial, index) => (
                 <motion.div key={index} variants={cardVariant}>
                   <motion.div
                     whileHover={{
                       y: -5,
-                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                      boxShadow: "0 0 20px rgba(80, 230, 255, 0.2)",
                     }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
-                    <Card className="border-0 shadow-md h-full">
+                    <Card className="border-[#1a1a3a] bg-[#0a0a2a]/80 backdrop-blur-sm shadow-md h-full">
                       <CardHeader>
                         <div className="flex items-center gap-4">
                           <motion.div
                             whileHover={{ scale: 1.1, rotate: 5 }}
                             transition={{ type: "spring", stiffness: 400 }}
                           >
-                            <Image
-                              src="/placeholder.svg?height=50&width=50"
-                              width={50}
-                              height={50}
-                              alt="Customer"
-                              className="rounded-full"
-                            />
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#50e6ff] to-[#b066ff] flex items-center justify-center text-white font-bold text-lg">
+                              {testimonial.name.charAt(0)}
+                            </div>
                           </motion.div>
                           <div>
-                            <CardTitle className="text-lg">{testimonial.name}</CardTitle>
-                            <CardDescription>{testimonial.role}</CardDescription>
+                            <CardTitle className="text-white text-lg">{testimonial.name}</CardTitle>
+                            <CardDescription className="text-gray-400">{testimonial.role}</CardDescription>
                           </div>
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-muted-foreground">"{testimonial.testimonial}"</p>
+                        <p className="text-gray-400">"{testimonial.testimonial}"</p>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -482,16 +837,18 @@ export default function Home() {
         </section>
 
         {/* Contact Section */}
-        <section id="contact" className="w-full py-12 md:py-24 lg:py-32 bg-muted">
+        <section id="contact" className="w-full py-12 md:py-24 lg:py-32 bg-[#05051d]">
           <div className="container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
               <AnimateWhenVisible variants={fadeInUp} className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
-                  <Badge variant="outline" className="w-fit">
+                  <Badge variant="outline" className="w-fit border-[#50e6ff] text-[#50e6ff]">
                     Contact Us
                   </Badge>
-                  <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Get in Touch</h2>
-                  <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-[#50e6ff] to-[#b066ff]">
+                    Get in Touch
+                  </h2>
+                  <p className="max-w-[600px] text-gray-300 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                     Have questions or need help choosing the right plan? Our team is here to help you find the perfect
                     hosting solution.
                   </p>
@@ -504,8 +861,8 @@ export default function Home() {
                     viewport={{ once: true }}
                     className="flex items-center gap-2"
                   >
-                    <Users className="h-5 w-5 text-primary" />
-                    <span>24/7 Customer Support</span>
+                    <Users className="h-5 w-5 text-[#50e6ff]" />
+                    <span className="text-gray-300">24/7 Customer Support</span>
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
@@ -514,8 +871,8 @@ export default function Home() {
                     viewport={{ once: true }}
                     className="flex items-center gap-2"
                   >
-                    <Globe className="h-5 w-5 text-primary" />
-                    <span>Global Data Centers</span>
+                    <Globe className="h-5 w-5 text-[#50e6ff]" />
+                    <span className="text-gray-300">Global Data Centers</span>
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
@@ -524,21 +881,52 @@ export default function Home() {
                     viewport={{ once: true }}
                     className="flex items-center gap-2"
                   >
-                    <Server className="h-5 w-5 text-primary" />
-                    <span>Custom Server Solutions</span>
+                    <DiscordIcon className="h-5 w-5 text-[#50e6ff]" />
+                    <Link
+                      href="https://discord.gg/Gd4FQyuNFC"
+                      target="_blank"
+                      className="text-gray-300 hover:text-[#50e6ff]"
+                    >
+                      Join our Discord community
+                    </Link>
                   </motion.div>
                 </div>
               </AnimateWhenVisible>
               <AnimateWhenVisible
                 variants={fadeIn}
-                className="flex flex-col gap-4 rounded-lg border bg-background p-6 shadow-lg"
+                className="flex flex-col gap-4 rounded-lg border border-[#1a1a3a] bg-[#0a0a2a]/80 backdrop-blur-sm p-6 shadow-lg relative overflow-hidden"
               >
-                <div className="grid gap-4">
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-[#50e6ff]/5 to-[#b066ff]/5"
+                  animate={{
+                    opacity: [0.1, 0.2, 0.1],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeInOut",
+                  }}
+                />
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    const formData = new FormData(e.currentTarget)
+                    formAction(formData)
+                    // Clear form fields after submission
+                    e.currentTarget.reset()
+                    // Show success message
+                    toast({
+                      title: "Message sent!",
+                      description: "We'll get back to you as soon as possible.",
+                    })
+                  }}
+                  className="grid gap-4 relative z-10"
+                >
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label
                         htmlFor="first-name"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        className="text-sm font-medium leading-none text-gray-300 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
                         First name
                       </label>
@@ -546,14 +934,16 @@ export default function Home() {
                         whileFocus={{ scale: 1.02 }}
                         transition={{ type: "spring", stiffness: 400 }}
                         id="first-name"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        name="first-name"
+                        className="flex h-10 w-full rounded-md border border-[#1a1a3a] bg-[#030315] px-3 py-2 text-sm text-white ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#50e6ff] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         placeholder="Enter your first name"
+                        required
                       />
                     </div>
                     <div className="space-y-2">
                       <label
                         htmlFor="last-name"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        className="text-sm font-medium leading-none text-gray-300 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
                         Last name
                       </label>
@@ -561,15 +951,17 @@ export default function Home() {
                         whileFocus={{ scale: 1.02 }}
                         transition={{ type: "spring", stiffness: 400 }}
                         id="last-name"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        name="last-name"
+                        className="flex h-10 w-full rounded-md border border-[#1a1a3a] bg-[#030315] px-3 py-2 text-sm text-white ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#50e6ff] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         placeholder="Enter your last name"
+                        required
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <label
                       htmlFor="email"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      className="text-sm font-medium leading-none text-gray-300 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
                       Email
                     </label>
@@ -577,15 +969,17 @@ export default function Home() {
                       whileFocus={{ scale: 1.02 }}
                       transition={{ type: "spring", stiffness: 400 }}
                       id="email"
+                      name="email"
                       type="email"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-10 w-full rounded-md border border-[#1a1a3a] bg-[#030315] px-3 py-2 text-sm text-white ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#50e6ff] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       placeholder="Enter your email"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
                     <label
                       htmlFor="message"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      className="text-sm font-medium leading-none text-gray-300 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
                       Message
                     </label>
@@ -593,47 +987,93 @@ export default function Home() {
                       whileFocus={{ scale: 1.02 }}
                       transition={{ type: "spring", stiffness: 400 }}
                       id="message"
-                      className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      name="message"
+                      className="flex min-h-[120px] w-full rounded-md border border-[#1a1a3a] bg-[#030315] px-3 py-2 text-sm text-white ring-offset-background placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#50e6ff] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       placeholder="Enter your message"
+                      required
                     />
                   </div>
-                </div>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button>Send Message</Button>
-                </motion.div>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full">
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-[#50e6ff] to-[#b066ff] hover:from-[#b066ff] hover:to-[#50e6ff] text-white border-0"
+                    >
+                      Send Message
+                    </Button>
+                  </motion.div>
+                  {formState?.message && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`p-3 rounded-md text-center ${
+                        formState.success ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"
+                      }`}
+                    >
+                      {formState.message}
+                    </motion.div>
+                  )}
+                </form>
               </AnimateWhenVisible>
             </div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-primary text-primary-foreground">
-          <div className="container px-4 md:px-6">
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-[#030315] to-[#0c0c2d] relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/placeholder.svg?height=1080&width=1920')] bg-cover bg-center opacity-5" />
+
+          {/* Animated circuit lines */}
+          <div className="absolute inset-0 opacity-10">
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="circuit" width="100" height="100" patternUnits="userSpaceOnUse">
+                  <path
+                    d="M0 50 H100 M50 0 V100 M25 25 L75 75 M75 25 L25 75"
+                    stroke="#50e6ff"
+                    strokeWidth="0.5"
+                    fill="none"
+                  />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#circuit)" />
+            </svg>
+          </div>
+
+          <div className="container px-4 md:px-6 relative z-10">
             <AnimateWhenVisible
               variants={fadeInUp}
               className="flex flex-col items-center justify-center space-y-4 text-center"
             >
               <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Ready to Get Started?</h2>
-                <p className="mx-auto max-w-[700px] md:text-xl">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-[#50e6ff] to-[#b066ff]">
+                  Ready to Get Started?
+                </h2>
+                <p className="mx-auto max-w-[700px] text-gray-300 md:text-xl">
                   Join thousands of satisfied customers who trust SoleNodes for their server needs.
                 </p>
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button size="lg" variant="secondary" className="gap-1">
-                    <Link href="https://billing.solenodes.cloud/" className="flex items-center">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={glowVariant.initial}
+                  animate={glowVariant.animate}
+                >
+                  <Button
+                    size="lg"
+                    className="gap-1 bg-gradient-to-r from-[#50e6ff] to-[#b066ff] hover:from-[#b066ff] hover:to-[#50e6ff] text-white border-0"
+                  >
+                    <Link href="https://billing.solenodes.cloud/" className="flex items-center" target="_blank">
                       Get Started <ChevronRight className="h-4 w-4" />
                     </Link>
                   </Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="text-primary-foreground border-primary-foreground hover:bg-primary-foreground hover:text-primary"
-                  >
-                    Contact Sales
+                  <Button size="lg" variant="outline" className="border-[#50e6ff] text-[#50e6ff] hover:bg-[#50e6ff]/10">
+                    <Link href="https://discord.gg/Gd4FQyuNFC" target="_blank" className="flex items-center gap-2">
+                      <DiscordIcon className="h-4 w-4" />
+                      Join Discord
+                    </Link>
                   </Button>
                 </motion.div>
               </div>
@@ -645,22 +1085,32 @@ export default function Home() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="w-full border-t bg-background py-6 md:py-12"
+        className="w-full border-t border-[#1a1a3a] bg-[#030315] py-6 md:py-12"
       >
         <div className="container px-4 md:px-6">
           <div className="grid gap-8 lg:grid-cols-4">
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
                 <motion.div whileHover={{ rotate: 10 }} transition={{ type: "spring", stiffness: 400 }}>
-                  <Server className="h-6 w-6 text-primary" />
+                  <Server className="h-6 w-6 text-[#50e6ff]" />
                 </motion.div>
-                <span className="font-bold">SoleNodes</span>
+                <span className="font-bold text-white">SoleNodes</span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Reliable server hosting solutions for businesses of all sizes.
+              <p className="text-sm text-gray-400">
+                Reliable game server hosting solutions for players and communities.
               </p>
               <div className="flex space-x-4">
-                <Link href="#" className="text-muted-foreground hover:text-foreground">
+                <Link
+                  href="https://discord.gg/Gd4FQyuNFC"
+                  target="_blank"
+                  className="text-gray-400 hover:text-[#50e6ff]"
+                >
+                  <motion.div whileHover={{ scale: 1.2 }} transition={{ type: "spring", stiffness: 400 }}>
+                    <DiscordIcon className="h-5 w-5" />
+                  </motion.div>
+                  <span className="sr-only">Discord</span>
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-[#50e6ff]">
                   <motion.svg
                     whileHover={{ scale: 1.2 }}
                     transition={{ type: "spring", stiffness: 400 }}
@@ -679,7 +1129,7 @@ export default function Home() {
                   </motion.svg>
                   <span className="sr-only">Facebook</span>
                 </Link>
-                <Link href="#" className="text-muted-foreground hover:text-foreground">
+                <Link href="#" className="text-gray-400 hover:text-[#50e6ff]">
                   <motion.svg
                     whileHover={{ scale: 1.2 }}
                     transition={{ type: "spring", stiffness: 400 }}
@@ -698,117 +1148,115 @@ export default function Home() {
                   </motion.svg>
                   <span className="sr-only">Twitter</span>
                 </Link>
-                <Link href="#" className="text-muted-foreground hover:text-foreground">
-                  <motion.svg
-                    whileHover={{ scale: 1.2 }}
-                    transition={{ type: "spring", stiffness: 400 }}
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-5 w-5"
-                  >
-                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                    <rect width="4" height="12" x="2" y="9"></rect>
-                    <circle cx="4" cy="4" r="2"></circle>
-                  </motion.svg>
-                  <span className="sr-only">LinkedIn</span>
-                </Link>
               </div>
             </div>
             <div className="space-y-4">
-              <h4 className="text-sm font-medium">Company</h4>
+              <h4 className="text-sm font-medium text-white">Services</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
-                    About
+                  <Link
+                    href="https://billing.solenodes.cloud/"
+                    target="_blank"
+                    className="text-gray-400 hover:text-[#50e6ff]"
+                  >
+                    Minecraft Servers
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
-                    Careers
+                  <Link
+                    href="https://billing.solenodes.cloud/"
+                    target="_blank"
+                    className="text-gray-400 hover:text-[#50e6ff]"
+                  >
+                    Game Servers
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
-                    Press
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium">Services</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    href="https://billing.solenodes.cloud/"
+                    target="_blank"
+                    className="text-gray-400 hover:text-[#50e6ff]"
+                  >
                     VPS Hosting
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
-                    Dedicated Servers
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
-                    Cloud Hosting
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
-                    Game Servers
+                  <Link
+                    href="https://billing.solenodes.cloud/"
+                    target="_blank"
+                    className="text-gray-400 hover:text-[#50e6ff]"
+                  >
+                    Web Hosting
                   </Link>
                 </li>
               </ul>
             </div>
             <div className="space-y-4">
-              <h4 className="text-sm font-medium">Support</h4>
+              <h4 className="text-sm font-medium text-white">Support</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
-                    Help Center
+                  <Link
+                    href="https://discord.gg/Gd4FQyuNFC"
+                    target="_blank"
+                    className="text-gray-400 hover:text-[#50e6ff]"
+                  >
+                    Discord Support
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
-                    Documentation
+                  <Link href="#contact" className="text-gray-400 hover:text-[#50e6ff]">
+                    Contact Us
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    href="https://billing.solenodes.cloud/"
+                    target="_blank"
+                    className="text-gray-400 hover:text-[#50e6ff]"
+                  >
+                    Client Area
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-400 hover:text-[#50e6ff]">
                     Status
                   </Link>
                 </li>
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-white">Legal</h4>
+              <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
-                    Contact
+                  <Link href="#" className="text-gray-400 hover:text-[#50e6ff]">
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-400 hover:text-[#50e6ff]">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-400 hover:text-[#50e6ff]">
+                    Refund Policy
                   </Link>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="mt-8 border-t pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-xs text-muted-foreground mb-4 md:mb-0">
+          <div className="mt-8 border-t border-[#1a1a3a] pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-xs text-gray-400 mb-4 md:mb-0">
               © {new Date().getFullYear()} SoleNodes. All rights reserved.
             </p>
-            <div className="flex space-x-4 text-xs text-muted-foreground">
-              <Link href="#" className="hover:text-foreground">
+            <div className="flex space-x-4 text-xs text-gray-400">
+              <Link href="#" className="hover:text-[#50e6ff]">
                 Terms of Service
               </Link>
-              <Link href="#" className="hover:text-foreground">
+              <Link href="#" className="hover:text-[#50e6ff]">
                 Privacy Policy
               </Link>
-              <Link href="#" className="hover:text-foreground">
+              <Link href="#" className="hover:text-[#50e6ff]">
                 Cookie Policy
               </Link>
             </div>
