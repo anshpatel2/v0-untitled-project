@@ -555,31 +555,52 @@ export default function Home() {
             >
               {[
                 {
-                  title: "Basic",
+                  title: "Cobblestone",
                   description: "Perfect for small Minecraft servers",
-                  price: "$4.99",
-                  features: ["2GB RAM", "2 vCPU Cores", "30GB SSD Storage", "Unlimited Bandwidth", "24/7 Support"],
-                  popular: false,
-                },
-                {
-                  title: "Premium",
-                  description: "Ideal for medium-sized communities",
-                  price: "$9.99",
-                  features: ["4GB RAM", "3 vCPU Cores", "50GB SSD Storage", "Unlimited Bandwidth", "Priority Support"],
-                  popular: true,
-                },
-                {
-                  title: "Ultimate",
-                  description: "For large Minecraft communities",
-                  price: "$19.99",
+                  price: "₹250.00",
                   features: [
-                    "8GB RAM",
-                    "4 vCPU Cores",
-                    "100GB SSD Storage",
-                    "Unlimited Bandwidth",
-                    "Dedicated Support",
+                    "4GB RAM",
+                    "1.8 vCPU Cores",
+                    "25GB SSD Storage",
+                    "2 Additional Ports",
+                    "4 DB Spaces",
+                    "Backup - 2 Automated",
+                    "24/7 Support",
                   ],
                   popular: false,
+                  icon: <Server className="h-6 w-6 text-[#50e6ff]" />,
+                },
+                {
+                  title: "Iron",
+                  description: "Ideal for medium-sized communities",
+                  price: "₹515.00",
+                  features: [
+                    "7GB RAM",
+                    "2.8 vCPU Cores",
+                    "42GB SSD Storage",
+                    "4 Additional Ports",
+                    "4 DB Spaces",
+                    "Backup - 3 Automated",
+                    "24/7 Support",
+                  ],
+                  popular: true,
+                  icon: <Shield className="h-6 w-6 text-[#50e6ff]" />,
+                },
+                {
+                  title: "Netherite",
+                  description: "For large Minecraft communities",
+                  price: "₹1,117.00",
+                  features: [
+                    "16GB RAM",
+                    "4.5 vCPU Cores",
+                    "96GB SSD Storage",
+                    "6 Additional Ports",
+                    "8 DB Spaces",
+                    "Backup - 5 Automated",
+                    "24/7 Support",
+                  ],
+                  popular: false,
+                  icon: <Zap className="h-6 w-6 text-[#50e6ff]" />,
                 },
               ].map((plan, index) => (
                 <motion.div key={index} variants={cardVariant}>
@@ -616,7 +637,10 @@ export default function Home() {
                       )}
                       <CardHeader>
                         <div className="flex justify-between items-center">
-                          <CardTitle className="text-white">{plan.title}</CardTitle>
+                          <div className="flex items-center gap-2">
+                            {plan.icon}
+                            <CardTitle className="text-white">{plan.title}</CardTitle>
+                          </div>
                           {plan.popular && <Badge className="bg-[#50e6ff] text-[#030315] invisible">Popular</Badge>}
                         </div>
                         <CardDescription className="text-gray-400">{plan.description}</CardDescription>
@@ -629,7 +653,7 @@ export default function Home() {
                         <ul className="mt-6 space-y-2">
                           {plan.features.map((feature, i) => (
                             <li key={i} className="flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-[#50e6ff]" />
+                              <CheckCircle className="h-4 w-4 text-[#50e6ff] flex-shrink-0" />
                               <span className="text-gray-300">{feature}</span>
                             </li>
                           ))}
